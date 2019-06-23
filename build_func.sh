@@ -76,3 +76,18 @@ fetch_github_releases () {
         fi
     done
 }
+
+check_neccessary_commands () {
+    local command cmd_list
+
+    # 必要なコマンドが存在するか確認
+    for command in "$@"; do
+        echo checking $command ...
+        if !(which $command > /dev/null 2>&1); then
+            echo "please install "$command
+            # exit 1
+        else
+            echo $command ok
+        fi
+    done
+}

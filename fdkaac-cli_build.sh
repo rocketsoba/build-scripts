@@ -1,11 +1,9 @@
+#!/bin/bash
 
-# check neccessary commands
-for command in curl sed grep; do
-    if !(which $command > /dev/null 2>&1); then
-        echo "please install "$command
-        exit 1
-    fi
-done
+source ./build_func.sh
+
+COMMANDS=("gcc" "curl" "sed" "grep" "autoreconf" "make" "libtool")
+check_neccessary_commands "${COMMANDS[@]}"
 
 if [ -z $TMP ]; then
     WORK_PATH="/tmp"
@@ -13,38 +11,28 @@ else
     WORK_PATH=$TMP
 fi
 
+if [ -z $FDKAAC_PATH ]; then
+    echo "please specify fdk-aac installed PATH"
+    exit 1
+else
+    if [ ${FDKAAC_PATH:$((${#FDKAAC_PATH}-1))} != "/" ]; then
+        FDKAAC_PATH=${FDKAAC_PATH}"/"
+    fi
+    LDFLAGS=`env PKG_CONFIG_PATH=${FDKAAC_PATH}lib/pkgconfig pkg-config --libs-only-L fdk-aac`
+    LDFLAGS=$LDFLAGS" -Wl,-rpath,"`find ${FDKAAC_PATH} -name 'lib' | head -n1`
+    CFLAGS=`env PKG_CONFIG_PATH=${FDKAAC_PATH}lib/pkgconfig pkg-config --cflags fdk-aac`
+fi
+
+echo $LDFLAGS
+echo $CFLAGS
+
 FDKAAC_CLI_BUILD_PATH=${WORK_PATH}"/fdkaac-cli-build."`date "+%Y%m%d%H%M%S."`$$"/"
 FDKAAC_CLI_RELEASES_URL="https://github.com/nu774/fdkaac/releases"
 
-mkdir $FDKAAC_CLI_BUILD_PATH
-
-curl -Lso ${FDKAAC_CLI_BUILD_PATH}fdkaac-cli_releases.html $FDKAAC_CLI_RELEASES_URL
-#リリースのHTMLが正しく取得で来てるか確認する
-
-cat ${FDKAAC_CLI_BUILD_PATH}fdkaac-cli_releases.html | grep -Po "(?<=class=\"muted-link\" href=\").+\.tar\.gz" | xargs -I{} echo "https://github.com"{} > ${FDKAAC_CLI_BUILD_PATH}tarball_list
-
-while true
-do
-    FDKAAC_CLI_NEXT_URL=`cat ${FDKAAC_CLI_BUILD_PATH}fdkaac-cli_releases.html | grep -Po "(?<=<a rel=\"nofollow\" href=\")[^\"]+(?=\">Next</a>)"`
-    echo $FDKAAC_CLI_NEXT_URL
-    if [ "${FDKAAC_CLI_NEXT_URL}" = "" ]; then
-        break
-    fi
-    sleep 3
-    curl -Lso ${FDKAAC_CLI_BUILD_PATH}fdkaac-cli_releases.html $FDKAAC_CLI_NEXT_URL
-    cat ${FDKAAC_CLI_BUILD_PATH}fdkaac-cli_releases.html | grep -Po "(?<=class=\"muted-link\" href=\").+\.tar\.gz" | xargs -I{} echo "https://github.com"{} >> ${FDKAAC_CLI_BUILD_PATH}tarball_list
-
-    # if FDKAAC_CLI_NEXT_URL=`cat ${FDKAAC_CLI_BUILD_PATH}fdkaac-cli_releases.html | grep "Next" | grep -Po "(?<=href=\")[^\"]+"`; then
-    #     echo $FDKAAC_CLI_NEXT_URL
-    #     echo "Next Page exists"
-    # fi
-done
-
-echo "抜けた"
+fetch_github_releases $FDKAAC_CLI_RELEASES_URL $FDKAAC_CLI_BUILD_PATH
 
 RESOURCE_URL=`cat ${FDKAAC_CLI_BUILD_PATH}tarball_list | head -n1`
 FDKAAC_CLI_VERSION=`echo $RESOURCE_URL | grep -Po '(?<=/v)[^/]+(?=\.tar\.gz)'`
-echo $FDKAAC_CLI_VERSION
 FDKAAC_CLI_SRC=${FDKAAC_CLI_BUILD_PATH}"fdkaac-cli"${FDKAAC_VERSION}".tar.gz"
 
 curl -Lso $FDKAAC_CLI_SRC $RESOURCE_URL
@@ -52,6 +40,6 @@ tar xf $FDKAAC_CLI_SRC -C $FDKAAC_CLI_BUILD_PATH
 
 cd $FDKAAC_CLI_BUILD_PATH`tar ft $FDKAAC_CLI_SRC | head -n1`
 autoreconf -i
-./configure --prefix=${FDKAAC_CLI_BUILD_PATH}"fdkaac-cli"
+env LDFLAGS="${LDFLAGS}" CFLAGS="${CFLAGS}" ./configure --prefix=${FDKAAC_CLI_BUILD_PATH}"fdkaac-cli"
 make -j4
 make install

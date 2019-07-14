@@ -91,3 +91,54 @@ check_neccessary_commands () {
         fi
     done
 }
+
+curl_multi_exec () {
+    local url
+    local count=0
+
+    local emacs_binary_urls=()
+    for url in "$@"; do
+        env TIMEFORMAT='%R' bash -c 'echo '$url'; if ! [ -s '$count'.html ]; then time curl -fsLo '$count'.html '$url'; fi'
+        # echo $count'.html'
+
+        local emacs_url=$(search_href_and_fix "emacs" "${count}.html" $url 0)
+        env TIMEFORMAT='%R' bash -c 'echo "'$emacs_url'"; if ! [ -s '$count'_emacs.html ]; then time curl -fsLo '$count'_emacs.html "'$emacs_url'"; fi'
+
+        local emacs_binary=$(search_href_and_fix "emacs-26.2.tar.xz" "${count}_emacs.html" $emacs_url 1)
+        emacs_binary_urls+=($emacs_binary)
+        # echo $emacs_binary
+
+        # env TIMEFORMAT='%R' timeout 10 bash -c 'time curl -r 0-5242879 -fsLo /dev/null '$emacs_binary
+        echo $((count++)) > /dev/null
+        # echo ""
+    done
+
+    for emacs_binary in ${emacs_binary_urls[@]}; do
+        # env TIMEFORMAT='%R' timeout 10 bash -c 'time curl -r 0-5242879 -fLo /dev/null '$emacs_binary' && echo '$emacs_binary&
+        local domain=$(echo $emacs_binary | grep -Po "https?://[A-Za-z0-9-\.]+")
+        echo ${domain//./_}
+    done
+}
+
+search_href_and_fix() {
+    local search_str=$1
+    local file_name=$2
+    local url=$3
+    local regex_mode=$4
+
+    if [ $regex_mode -eq 1 ]; then
+        local url_suffix=$(grep -Po "(?<=href=\")[^\"]*${search_str}(?=\")" $file_name | head -n1)
+        # echo "absolute mode"
+    else
+        local url_suffix=$(grep -Po "(?<=href=\")[^\"]*${search_str}[^\"]*(?=\")" $file_name | head -n1)
+    fi
+
+    if [ "${url_suffix:0:2}" == "./" ]; then
+        echo $url${url_suffix:2}
+    elif [ "${url_suffix:0:1}" == "/" ]; then
+        local url=$(echo $url | grep -Po "https?://[A-Za-z0-9-\.]+")
+        echo $url$url_suffix
+    else
+        echo $url$url_suffix
+    fi
+}

@@ -24,7 +24,7 @@ MPFR_SRC=${MPFR_BUILD_PATH}"mpfr-2.4.2.tar.xz"
 
 
 
-RESOURCE_URL="http://ftp.jaist.ac.jp/pub/Linux/kernel.org/tools/crosstool/files/src/mpc-0.8.1.tar.xz"
+RESOURCE_URL="http://ftp.jaist.ac.jp/pub/GNU/mpfr/mpfr-2.4.2.tar.xz"
 if [ -z $SRC_CACHE_MODE ]; then
     curl -Lso $MPFR_SRC $RESOURCE_URL
 else

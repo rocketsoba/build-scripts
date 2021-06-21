@@ -85,7 +85,7 @@ check_neccessary_commands () {
         echo checking $command ...
         if !(which $command > /dev/null 2>&1); then
             echo "please install "$command
-            # exit 1
+            exit 1
         else
             echo $command ok
         fi

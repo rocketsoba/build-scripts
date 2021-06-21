@@ -2,7 +2,7 @@
 
 source ./build_func.sh
 
-COMMANDS=("gcc" "curl" "sed" "grep" "autoreconf" "make" "libtool" "strip")
+COMMANDS=("gcc" "curl" "sed" "grep" "autoreconf" "make" "libtool" "strip" "jq")
 check_neccessary_commands "${COMMANDS[@]}"
 
 if [ -z $TMP ]; then
@@ -16,11 +16,14 @@ if ! [ -d $GMP_BUILD_PATH ]; then
     mkdir -p $GMP_BUILD_PATH
 fi
 
+CACHE_DIR=$WORK_PATH"/src-cache"
+GMP_SRC=${GMP_BUILD_PATH}"gmp-4.3.2.tar.bz2"
+PREFIXPREFIX=${HOME}"/.opt"
+PREFIX=${PREFIXPREFIX}"/gmp"
+
 LDFLAGS="-Wl,-s -Wl,--gc-sections"
 CFLAGS="-Os"
 CXXFLAGS=$CFLAGS
-CACHE_DIR=$WORK_PATH"/src-cache"
-GMP_SRC=${GMP_BUILD_PATH}"gmp-4.3.2.tar.bz2"
 
 RESOURCE_URL="http://ftp.yz.yamagata-u.ac.jp/pub/GNU/gmp/gmp-4.3.2.tar.bz2"
 if [ -z $SRC_CACHE_MODE ]; then
@@ -39,8 +42,8 @@ fi
 tar xf $GMP_SRC -C $GMP_BUILD_PATH
 
 cd $GMP_BUILD_PATH$(tar ft $GMP_SRC | head -n1)
-env LDFLAGS="${LDFLAGS}" CFLAGS="${CFLAGS}" CXXFLAGS="${CXXFLAGS}" ./configure --prefix=${HOME}"/opt/gmp" --enable-cxx -disable-static
-# ./configure --prefix=${GMP_BUILD_PATH}"gmp" -disable-static
+env LDFLAGS="${LDFLAGS}" CFLAGS="${CFLAGS}" CXXFLAGS="${CXXFLAGS}" ./configure --prefix="${PREFIX}" --enable-cxx --disable-static
 make -j4
 make install
 echo $GMP_BUILD_PATH
+echo "{}" | jq '.name|="gmp"|.version|="4.3.2"|.prefix|="'${PREFIX}'"|.libdir|="'${PREFIX}'/lib"|.includedir|="'${PREFIX}'/include"|.install_date|="'"$(date -R)"'"' > ${PREFIX}"/package_info.json"

@@ -2,7 +2,7 @@
 
 source ./build_func.sh
 
-COMMANDS=("gcc" "curl" "sed" "grep" "autoreconf" "make" "libtool" "strip")
+COMMANDS=("gcc" "curl" "sed" "grep" "autoreconf" "make" "libtool" "strip" "jq")
 check_neccessary_commands "${COMMANDS[@]}"
 
 if [ -z $TMP ]; then
@@ -16,13 +16,23 @@ if ! [ -d $MPFR_BUILD_PATH ]; then
     mkdir -p $MPFR_BUILD_PATH
 fi
 
-LDFLAGS="${LDFLAGS} -Wl,-s -Wl,--gc-sections"
-CFLAGS="${CFLAGS} -Os"
-CXXFLAGS=$CFLAGS
 CACHE_DIR=$WORK_PATH"/src-cache"
 MPFR_SRC=${MPFR_BUILD_PATH}"mpfr-2.4.2.tar.xz"
+PREFIXPREFIX=${HOME}"/.opt"
+PREFIX=${PREFIXPREFIX}"/mpfr"
 
+if !(find ${PREFIXPREFIX} -maxdepth 2 -type f | grep "gmp/package_info.json" > /dev/null 2>&1); then
+    echo "please install gmp"
+    exit 1;
+else
+    GMP_PATH=$(cat $(find ${PREFIXPREFIX} -maxdepth 2 -type f | grep "gmp/package_info.json" | head -n1) | jq -r '.prefix')
+    GMP_LIBRARY_PATH=$(cat  ${GMP_PATH}"/package_info.json" | jq -r '.libdir')
+    GMP_INCLUDE_PATH=$(cat  ${GMP_PATH}"/package_info.json" | jq -r '.includedir')
+fi
 
+LDFLAGS="-L"${GMP_LIBRARY_PATH}" -Wl,-rpath,"${GMP_LIBRARY_PATH}" ${LDFLAGS} -Wl,-s -Wl,--gc-sections"
+CFLAGS="-I"${GMP_INCLUDE_PATH}" ${CFLAGS} -Os"
+CXXFLAGS=$CFLAGS
 
 RESOURCE_URL="http://ftp.jaist.ac.jp/pub/GNU/mpfr/mpfr-2.4.2.tar.xz"
 if [ -z $SRC_CACHE_MODE ]; then
@@ -41,9 +51,8 @@ fi
 tar xf $MPFR_SRC -C $MPFR_BUILD_PATH
 
 cd $MPFR_BUILD_PATH$(tar ft $MPFR_SRC | head -n1)
-env LDFLAGS="${LDFLAGS}" CFLAGS="${CFLAGS}" CXXFLAGS="${CXXFLAGS}" ./configure --prefix=${HOME}"/opt/mpfr" -disable-static
-# ./configure --prefix=${MPFR_BUILD_PATH}"mpfr" -disable-static
+env LDFLAGS="${LDFLAGS}" CFLAGS="${CFLAGS}" CXXFLAGS="${CXXFLAGS}" ./configure --prefix="${PREFIX}" --disable-static
 make -j4
 make install
 echo $MPFR_BUILD_PATH
-
+echo "{}" | jq '.name|="mpfr"|.version|="2.4.2"|.prefix|="'${PREFIX}'"|.libdir|="'${PREFIX}'/lib"|.includedir|="'${PREFIX}'/include"|.install_date|="'"$(date -R)"'"' > ${PREFIX}"/package_info.json"

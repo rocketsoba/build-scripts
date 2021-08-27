@@ -78,3 +78,10 @@ echo $GCC_BUILD_PATH
 echo "{}" | jq '.name|="gcc"|.version|="4.9.4"|.prefix|="'${PREFIX}'"|.libdir|="'${PREFIX}'/lib"|.includedir|="'${PREFIX}'/include"|.install_date|="'"$(date -R)"'"' > ${PREFIX}"/package_info.json"
 
 # https://ryuichi1208.hateblo.jp/entry/2020/05/11/000000_1
+
+SPEC_DIR_CHECK=$(find ${PREFIX}/lib -mindepth 3 -maxdepth 3 -type d | wc -l 2> /dev/null)
+
+if ! [ -z $SPEC_DIR_CHECK ] && [ $SPEC_DIR_CHECK -eq 1 ]; then
+    SPEC_DIR=$(find ${PREFIX}/lib -mindepth 3 -maxdepth 3 -type d)
+    gcc -dumpspecs | sed -e '/\*link_libgcc:/,/%D/ s/^%D$/%{!static:%{!static-libgcc:-rpath '$(echo ${PREFIX} | sed -e 's/\//\\\//g')'\/lib64\/}} %D/g' > ${SPEC_DIR}/specs
+fi

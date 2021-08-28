@@ -17,6 +17,8 @@ if ! [ -d $GCC_BUILD_PATH ]; then
 fi
 
 CACHE_DIR=$WORK_PATH"/src-cache"
+SRC_CACHE_MODE=1
+CLEAN_MODE=1
 GCC_SRC=${GCC_BUILD_PATH}"gcc-4.9.4.tar.bz2"
 PREFIXPREFIX=${HOME}"/.opt"
 PREFIX=${PREFIXPREFIX}"/gcc"
@@ -84,4 +86,8 @@ SPEC_DIR_CHECK=$(find ${PREFIX}/lib -mindepth 3 -maxdepth 3 -type d | wc -l 2> /
 if ! [ -z $SPEC_DIR_CHECK ] && [ $SPEC_DIR_CHECK -eq 1 ]; then
     SPEC_DIR=$(find ${PREFIX}/lib -mindepth 3 -maxdepth 3 -type d)
     gcc -dumpspecs | sed -e '/\*link_libgcc:/,/%D/ s/^%D$/%{!static:%{!static-libgcc:-rpath '$(echo ${PREFIX} | sed -e 's/\//\\\//g')'\/lib64\/}} %D/g' > ${SPEC_DIR}/specs
+fi
+
+if [ -n $CLEAN_MODE ]; then
+    rm -rf $GCC_BUILD_PATH
 fi

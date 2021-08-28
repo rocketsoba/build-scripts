@@ -11,12 +11,14 @@ else
     WORK_PATH=$TMP
 fi
 
-GMP_BUILD_PATH=${WORK_PATH}"/gcc4.9.4-build."$(date "+%Y%m%d%H%M%S.")$$"/"
+GMP_BUILD_PATH=${WORK_PATH}"/gmp-build."$(date "+%Y%m%d%H%M%S.")$$"/"
 if ! [ -d $GMP_BUILD_PATH ]; then
     mkdir -p $GMP_BUILD_PATH
 fi
 
 CACHE_DIR=$WORK_PATH"/src-cache"
+SRC_CACHE_MODE=1
+CLEAN_MODE=1
 GMP_SRC=${GMP_BUILD_PATH}"gmp-4.3.2.tar.bz2"
 PREFIXPREFIX=${HOME}"/.opt"
 PREFIX=${PREFIXPREFIX}"/gmp"
@@ -47,3 +49,7 @@ make -j4
 make install
 echo $GMP_BUILD_PATH
 echo "{}" | jq '.name|="gmp"|.version|="4.3.2"|.prefix|="'${PREFIX}'"|.libdir|="'${PREFIX}'/lib"|.includedir|="'${PREFIX}'/include"|.install_date|="'"$(date -R)"'"' > ${PREFIX}"/package_info.json"
+
+if [ -n $CLEAN_MODE ]; then
+    rm -rf $GMP_BUILD_PATH
+fi

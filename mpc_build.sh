@@ -11,12 +11,14 @@ else
     WORK_PATH=$TMP
 fi
 
-MPC_BUILD_PATH=${WORK_PATH}"/gcc4.9.4-build."$(date "+%Y%m%d%H%M%S.")$$"/"
+MPC_BUILD_PATH=${WORK_PATH}"/mpc-build."$(date "+%Y%m%d%H%M%S.")$$"/"
 if ! [ -d $MPC_BUILD_PATH ]; then
     mkdir -p $MPC_BUILD_PATH
 fi
 
 CACHE_DIR=$WORK_PATH"/src-cache"
+SRC_CACHE_MODE=1
+CLEAN_MODE=1
 MPC_SRC=${MPC_BUILD_PATH}"mpc-0.8.1.tar.xz"
 PREFIXPREFIX=${HOME}"/.opt"
 PREFIX=${PREFIXPREFIX}"/mpc"
@@ -65,3 +67,7 @@ make -j4
 make install
 echo $MPC_BUILD_PATH
 echo "{}" | jq '.name|="mpc"|.version|="0.8.1"|.prefix|="'${PREFIX}'"|.libdir|="'${PREFIX}'/lib"|.includedir|="'${PREFIX}'/include"|.install_date|="'"$(date -R)"'"' > ${PREFIX}"/package_info.json"
+
+if [ -n $CLEAN_MODE ]; then
+    rm -rf $MPC_BUILD_PATH
+fi

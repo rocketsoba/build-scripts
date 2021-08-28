@@ -17,6 +17,8 @@ if ! [ -d $TMUX_BUILD_PATH ]; then
 fi
 
 CACHE_DIR=$WORK_PATH"/src-cache"
+SRC_CACHE_MODE=1
+CLEAN_MODE=1
 TMUX_SRC=${TMUX_BUILD_PATH}"tmux-3.2a.tar.gz"
 PREFIXPREFIX=${HOME}"/opt"
 PREFIX=${PREFIXPREFIX}"/tmux"
@@ -47,3 +49,7 @@ make -j4
 make install
 echo $TMUX_BUILD_PATH
 echo "{}" | jq '.name|="tmux"|.version|="3.2a"|.prefix|="'${PREFIX}'"|.install_date|="'"$(date -R)"'"' > ${PREFIX}"/package_info.json"
+
+if [ -n $CLEAN_MODE ]; then
+    rm -rf $TMUX_BUILD_PATH
+fi

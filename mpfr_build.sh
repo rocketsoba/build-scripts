@@ -11,12 +11,14 @@ else
     WORK_PATH=$TMP
 fi
 
-MPFR_BUILD_PATH=${WORK_PATH}"/gcc4.9.4-build."$(date "+%Y%m%d%H%M%S.")$$"/"
+MPFR_BUILD_PATH=${WORK_PATH}"/mpfr-build."$(date "+%Y%m%d%H%M%S.")$$"/"
 if ! [ -d $MPFR_BUILD_PATH ]; then
     mkdir -p $MPFR_BUILD_PATH
 fi
 
 CACHE_DIR=$WORK_PATH"/src-cache"
+SRC_CACHE_MODE=1
+CLEAN_MODE=1
 MPFR_SRC=${MPFR_BUILD_PATH}"mpfr-2.4.2.tar.xz"
 PREFIXPREFIX=${HOME}"/.opt"
 PREFIX=${PREFIXPREFIX}"/mpfr"
@@ -56,3 +58,7 @@ make -j4
 make install
 echo $MPFR_BUILD_PATH
 echo "{}" | jq '.name|="mpfr"|.version|="2.4.2"|.prefix|="'${PREFIX}'"|.libdir|="'${PREFIX}'/lib"|.includedir|="'${PREFIX}'/include"|.install_date|="'"$(date -R)"'"' > ${PREFIX}"/package_info.json"
+
+if [ -n $CLEAN_MODE ]; then
+    rm -rf $MPFR_BUILD_PATH
+fi

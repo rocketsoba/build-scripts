@@ -1,5 +1,26 @@
 #!/bin/bash
 
+# https://chitoku.jp/programming/bash-getopts-long-options#--foo-bar-%E3%82%92%E5%87%A6%E7%90%86%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95
+while getopts "a-:" OPT; do
+    # OPTIND 番目の引数を optarg へ代入
+    OPTARG2="${!OPTIND}"
+    if [ "$OPT" = - ]; then
+       OPT="${OPTARG}"
+    fi
+
+    case "$OPT" in
+        prefixprefix)
+            PREFIXPREFIX=$OPTARG2
+            shift
+            ;;
+        prefix)
+            PREFIX=$OPTARG2
+            shift
+            ;;
+    esac
+done
+shift $((OPTIND - 1))
+
 source ./build_func.sh
 
 COMMANDS=("gcc" "curl" "sed" "grep" "autoreconf" "make" "libtool" "strip" "jq")
@@ -20,8 +41,13 @@ CACHE_DIR=$WORK_PATH"/src-cache"
 SRC_CACHE_MODE=1
 CLEAN_MODE=1
 TMUX_SRC=${TMUX_BUILD_PATH}"tmux-3.2a.tar.gz"
-PREFIXPREFIX=${HOME}"/.opt"
-PREFIX=${PREFIXPREFIX}"/tmux"
+
+if [ -z $PREFIXPREFIX ]; then
+    PREFIXPREFIX=${HOME}"/.opt"
+fi
+if [ -z $PREFIX ]; then
+    PREFIX=${PREFIXPREFIX}"/tmux"
+fi
 
 if !(find /usr/lib64/libevent.so -type l > /dev/null 2>&1); then
     echo "please install libevent"

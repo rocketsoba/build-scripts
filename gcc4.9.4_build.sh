@@ -1,5 +1,26 @@
 #!/bin/bash
 
+# https://chitoku.jp/programming/bash-getopts-long-options#--foo-bar-%E3%82%92%E5%87%A6%E7%90%86%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95
+while getopts "a-:" OPT; do
+    # OPTIND 番目の引数を optarg へ代入
+    OPTARG2="${!OPTIND}"
+    if [ "$OPT" = - ]; then
+       OPT="${OPTARG}"
+    fi
+
+    case "$OPT" in
+        prefixprefix)
+            PREFIXPREFIX=$OPTARG2
+            shift
+            ;;
+        prefix)
+            PREFIX=$OPTARG2
+            shift
+            ;;
+    esac
+done
+shift $((OPTIND - 1))
+
 source ./build_func.sh
 
 COMMANDS=("gcc" "curl" "sed" "grep" "autoreconf" "make" "libtool" "strip" "jq")
@@ -20,8 +41,13 @@ CACHE_DIR=$WORK_PATH"/src-cache"
 SRC_CACHE_MODE=1
 CLEAN_MODE=1
 GCC_SRC=${GCC_BUILD_PATH}"gcc-4.9.4.tar.bz2"
-PREFIXPREFIX=${HOME}"/.opt"
-PREFIX=${PREFIXPREFIX}"/gcc"
+
+if [ -z $PREFIXPREFIX ]; then
+    PREFIXPREFIX=${HOME}"/.opt"
+fi
+if [ -z $PREFIX ]; then
+    PREFIX=${PREFIXPREFIX}"/gcc"
+fi
 
 if !(find ${PREFIXPREFIX} -maxdepth 2 -type f | grep "gmp/package_info.json" > /dev/null 2>&1); then
     echo "please install gmp"

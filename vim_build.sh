@@ -21,7 +21,7 @@ while getopts "a-:" OPT; do
 done
 shift $((OPTIND - 1))
 
-source ./build_func.sh
+source $(dirname $0)/build_func.sh
 
 COMMANDS=("gcc" "curl" "sed" "grep" "autoreconf" "make" "libtool" "strip" "jq")
 check_neccessary_commands "${COMMANDS[@]}"

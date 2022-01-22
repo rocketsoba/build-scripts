@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source ./build_func.sh
+source $(dirname $0)/build_func.sh
 
 COMMANDS=("gcc" "curl" "sed" "grep" "autoreconf" "make" "libtool")
 check_neccessary_commands "${COMMANDS[@]}"

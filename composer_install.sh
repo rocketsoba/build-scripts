@@ -23,7 +23,7 @@ shift $((OPTIND - 1))
 
 source $(dirname $0)/build_func.sh
 
-COMMANDS=("gcc" "curl" "sed" "grep" "autoreconf" "make" "libtool" "strip" "jq" "php")
+COMMANDS=("curl" "sed" "grep" "jq" "php")
 check_neccessary_commands "${COMMANDS[@]}"
 
 if [ -z $TMP ]; then
